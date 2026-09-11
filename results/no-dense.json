@@ -1,0 +1,43 @@
+{
+  "dense_model": null,
+  "corpus_size": 2500,
+  "sample_size": 200,
+  "seed": 0,
+  "overlap_threshold": 1.0,
+  "methods": {
+    "BM25 keyword": {
+      "n_queries": 200,
+      "recall_at_5": 0.835,
+      "recall_at_10": 0.86,
+      "mrr": 0.7274861111111112,
+      "ms_per_query": 20.64498449995881,
+      "by_overlap": {
+        "low_overlap": {
+          "n": 100,
+          "mrr": 0.5354722222222222
+        },
+        "high_overlap": {
+          "n": 100,
+          "mrr": 0.9195
+        }
+      }
+    },
+    "LSA (tf-idf + SVD, 200d)": {
+      "n_queries": 200,
+      "recall_at_5": 0.505,
+      "recall_at_10": 0.585,
+      "mrr": 0.36141468253968256,
+      "ms_per_query": 4.2800105000060285,
+      "by_overlap": {
+        "low_overlap": {
+          "n": 100,
+          "mrr": 0.25919444444444445
+        },
+        "high_overlap": {
+          "n": 100,
+          "mrr": 0.4636349206349206
+        }
+      }
+    }
+  }
+}

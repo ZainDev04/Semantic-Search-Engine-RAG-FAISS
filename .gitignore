@@ -3,3 +3,4 @@ data_src/
 __pycache__/
 *.pyc
 .cache/
+guide.pdf

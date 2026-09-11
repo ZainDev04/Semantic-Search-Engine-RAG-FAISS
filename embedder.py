@@ -18,9 +18,22 @@ Every backend exposes the same interface:
 
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
+
 import numpy as np
 
 DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+CACHE_DIR = Path(__file__).parent / ".cache" / "embeddings"
+
+
+def _cache_path(model_name: str, texts: list[str]) -> Path:
+    h = hashlib.sha1()
+    for t in texts:
+        h.update(t.encode("utf-8"))
+        h.update(b"\x00")
+    slug = model_name.replace("/", "__")
+    return CACHE_DIR / f"{slug}_{len(texts)}_{h.hexdigest()[:12]}.npy"
 
 
 class DenseIndex:
@@ -32,12 +45,22 @@ class DenseIndex:
         self.model_name = model_name
         self.name = f"dense ({model_name.split('/')[-1]})"
         self.model = SentenceTransformer(model_name)
-        embeddings = self.model.encode(
-            texts,
-            batch_size=batch_size,
-            show_progress_bar=False,
-            normalize_embeddings=True,
-        )
+
+        # Embedding 2,500 texts takes about a minute on CPU, so cache the
+        # result on disk, keyed by model and by a hash of the exact texts.
+        # Any change to the corpus or model produces a different key.
+        cache_path = _cache_path(model_name, texts)
+        if cache_path.exists():
+            embeddings = np.load(cache_path)
+        else:
+            embeddings = self.model.encode(
+                texts,
+                batch_size=batch_size,
+                show_progress_bar=False,
+                normalize_embeddings=True,
+            )
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            np.save(cache_path, np.asarray(embeddings, dtype="float32"))
         self.embeddings = np.asarray(embeddings, dtype="float32")
         # Vectors are unit-normalised, so inner product == cosine similarity.
         self.index = faiss.IndexFlatIP(self.embeddings.shape[1])
