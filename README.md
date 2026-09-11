@@ -1,8 +1,15 @@
-# Semantic search over commit history
+# Semantic search and RAG over commit history
 
-Search a git repository's commit messages by meaning instead of exact words, and measure whether that beats plain keyword search. On this corpus it doesn't, and this README explains why rather than hiding it.
+Search a git repository's commit messages by meaning instead of exact words, feed the results to a language model that answers questions with citations, and measure both halves separately.
 
-The corpus is 2,500 unique commit messages from [huggingface/datasets](https://github.com/huggingface/datasets). Four retrieval methods are compared on the same label-free task:
+The corpus is 2,500 unique commit messages from [huggingface/datasets](https://github.com/huggingface/datasets). Two evaluations, with different conclusions:
+
+1. **Self-retrieval (2,500 docs, 200 queries):** a commit's title has to find its own body. Keyword search (BM25) wins. This task is extractive by construction, so that is expected once you look at the data.
+2. **Question answering (22 hand-written questions):** paraphrased questions a developer might actually ask. Dense retrieval finds the right commit at rank 1 more often than BM25 (20/22 vs 17/22). A 0.5B-parameter local model then answers from the retrieved commits, and its citation behaviour is measured against a no-model extractive baseline, which it does not beat.
+
+## Part 1: retrieval
+
+Four retrieval methods are compared on the same label-free task:
 
 | method | what it is |
 |---|---|
@@ -11,7 +18,7 @@ The corpus is 2,500 unique commit messages from [huggingface/datasets](https://g
 | dense | sentence-transformer embeddings in a FAISS index (three models tried) |
 | hybrid | BM25 + dense, merged with reciprocal rank fusion |
 
-## Results
+### Results
 
 Task: for 200 randomly sampled commits, use the commit's one-line **title** as the query and check whether the search returns that commit's **body** from an index of all 2,500 bodies. Recall@k is the share of queries where the right body is in the top k; MRR is the mean of 1/rank.
 
@@ -30,9 +37,9 @@ Queries are also split into two halves of 100: titles whose every word (3+ chara
 
 Raw output, including per-query latency, is in `results/`, one file per dense model. The random seed is fixed (0), so the sample is reproducible.
 
-### What the numbers say
+#### What the numbers say
 
-**Keyword search wins this task, and that is a property of the task.** A commit's title and body are written by the same person about the same change, minutes apart. Half the sampled titles have every word present in the body, and the median overlap is 1.0. Titles reuse exact identifiers (`CastError`, `data_dir`, `push_to_hub`) that BM25 matches literally and that a general-purpose embedding model treats as low-information tokens. This is close to the best case for lexical search. A benchmark built from real user queries, which paraphrase and use different vocabulary, would look different; I did not have one for this corpus.
+**Keyword search wins this task, and that is a property of the task.** A commit's title and body are written by the same person about the same change, minutes apart. Half the sampled titles have every word present in the body, and the median overlap is 1.0. Titles reuse exact identifiers (`CastError`, `data_dir`, `push_to_hub`) that BM25 matches literally and that a general-purpose embedding model treats as low-information tokens. This is close to the best case for lexical search. Queries that paraphrase and use different vocabulary should look different, and Part 2 below checks that with a small hand-written question set.
 
 **Dense retrieval alone is clearly behind, even on the partial-overlap half.** The best dense model (bge-small) reaches 0.653 MRR against BM25's 0.727, and 0.437 against 0.535 on the harder half. So the embedding models are not rescuing the queries where keywords fail; they are losing on those too.
 
@@ -42,11 +49,60 @@ Raw output, including per-query latency, is in `results/`, one file per dense mo
 
 **LSA is the floor.** Cheapest method by far (about 4 ms/query, no model download), and it shows how much sentence transformers improved on the previous generation of "semantic" search.
 
-## Caveats
+### Caveats
 
 - The evaluation is a proxy. Recovering a body from its own title is not the same as answering real user queries, and it favors exact-match methods by construction. There are no human relevance judgments.
 - One random sample of 200 queries. Differences of a point or two are within noise; the BM25 vs dense gap is not.
 - 2,500 documents is small. Latencies are for an exact (brute-force) FAISS index on CPU and say nothing about scaling.
+
+## Part 2: question answering with citations
+
+`rag.py` takes a question, retrieves the top-5 commits with one of the retrievers above, and asks a language model to answer using only those commits, citing commit ids in square brackets. Every id in the answer is then checked against the retrieved set. An id that was never retrieved is a fabrication by construction; the model had no way to see it.
+
+### The question set
+
+`data/questions.jsonl` has 22 questions I wrote by reading commit bodies, each tagged with the commit that answers it. They are paraphrased ("Why did streaming reads of a private Lance dataset return 401 errors?") rather than copies of the commit title, which makes this a closer stand-in for real queries than Part 1. It is still small, and I wrote both the questions and the labels, so treat the margins as indicative.
+
+### Retrieval on the question set
+
+| retriever | expected commit in top 5 | at rank 1 | MRR |
+|---|---|---|---|
+| BM25 | 22/22 | 17/22 | 0.873 |
+| dense (MiniLM) | 22/22 | **20/22** | **0.943** |
+| hybrid | 22/22 | 19/22 | 0.932 |
+
+Every retriever gets the right commit into the context window every time, so retrieval is not the bottleneck for what follows. At rank 1 the order flips relative to Part 1: dense retrieval leads. That is consistent with the explanation given above, since these questions do not reuse the exact identifiers the way commit titles do.
+
+### Generation
+
+Three backends share the same prompt and the same citation checker:
+
+| backend | what it is |
+|---|---|
+| extractive | no model. Returns the top-1 commit's title and body with its id. The floor a generator has to beat. |
+| local | Qwen2.5-0.5B-Instruct via `transformers` on CPU. No key, no cost, runs on an 8 GB machine. Used for the committed numbers. |
+| claude | `claude-opus-5` through the Anthropic SDK. Wired up and documented; needs `ANTHROPIC_API_KEY`. Not used for committed numbers because they must be reproducible without a paid key. |
+
+Results with the local model (k = 5, greedy decoding, `results/rag_*.json`):
+
+| generator | retriever | cites expected commit | cites anything | citation precision | wrongly abstains | s/answer |
+|---|---|---|---|---|---|---|
+| extractive | BM25 | 0.77 | 1.00 | 1.00 | 0.00 | 0.0 |
+| extractive | dense | **0.91** | 1.00 | 1.00 | 0.00 | 0.0 |
+| extractive | hybrid | 0.86 | 1.00 | 1.00 | 0.00 | 0.0 |
+| Qwen2.5-0.5B | BM25 | 0.05 | 0.09 | 0.25 | 0.14 | 20.2 |
+| Qwen2.5-0.5B | dense | 0.14 | 0.14 | 0.83 | 0.14 | 17.9 |
+| Qwen2.5-0.5B | hybrid | 0.09 | 0.09 | 0.75 | 0.14 | 20.5 |
+
+"Citation precision" is the share of cited ids that were actually in the retrieved context; "wrongly abstains" is how often the model said the commits do not cover the question when the answering commit was in its context (it always was).
+
+#### What the numbers say
+
+**The 0.5B model does not beat "print the top search result".** It cites the right commit in at most 14% of answers, abstains on 14% of questions it had the answer to, and in a few cases copies the illustrative id from the prompt's format example (the checker flags every one of those as fabricated, which is the point of having a checker). Reading the answers by hand: many are correct paraphrases of the right commit with the citation simply missing, but one (q05) inverted the two schema types it was describing, which is the kind of subtle error a citation would at least let a reader check.
+
+**This is a model-size result, not a pipeline result.** Retrieval delivered the right commit 100% of the time. The failure is in instruction following by a model small enough to run on a 2012 CPU with 8 GB of RAM. The code takes `--model` for a larger local model and `--backend claude` for the API; I have not run either, so the README makes no claim about them.
+
+**Measuring the halves separately is what makes the table readable.** Had I reported only "answer quality", retrieval and generation failures would be indistinguishable. Splitting them shows the retriever is done and the generator is where the next hour of work should go.
 
 ## Data cleaning
 
@@ -72,6 +128,13 @@ python search.py "handle missing files when loading a dataset" --method hybrid -
 python evaluate.py                                                       # BM25, LSA, MiniLM, hybrid
 python evaluate.py --model BAAI/bge-small-en-v1.5
 python evaluate.py --skip-dense                                          # BM25 + LSA only, no torch
+
+python rag.py "why did to_csv turn integer columns into floats"          # local model, hybrid retriever
+python rag.py "..." --retriever dense --backend extractive
+python rag.py "..." --backend claude                                     # needs ANTHROPIC_API_KEY, pip install anthropic
+
+python evaluate_rag.py --backend extractive                              # seconds
+python evaluate_rag.py                                                   # local model, ~30 min on CPU
 ```
 
 `data/commits.jsonl` is committed, so nothing needs to be cloned to run the above. To rebuild it from a fresh metadata-only clone of the source repo:
@@ -89,6 +152,9 @@ embedder.py          DenseIndex (sentence-transformers + FAISS) and LSAIndex (sc
 hybrid.py            reciprocal rank fusion of any two searchers
 search.py            command-line search
 evaluate.py          self-retrieval evaluation with overlap split; writes results/<model>.json
+rag.py               retrieve -> generate -> check citations; extractive / local / claude backends
+evaluate_rag.py      runs the question set through every retriever; writes results/rag_<backend>.json
 data/commits.jsonl   2,500 cleaned commit records: id, title, body, text, author, date
-results/*.json       raw evaluation output per dense model
+data/questions.jsonl 22 hand-written questions with the commit that answers each
+results/*.json       raw evaluation output, retrieval and RAG
 ```

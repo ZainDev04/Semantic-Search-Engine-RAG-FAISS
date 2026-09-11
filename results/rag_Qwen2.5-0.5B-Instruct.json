@@ -1,0 +1,1390 @@
+{
+  "generator": "local (Qwen2.5-0.5B-Instruct)",
+  "k": 5,
+  "retrievers": {
+    "bm25": {
+      "summary": {
+        "n": 22,
+        "retrieval_hit": 1.0,
+        "cited_expected": 0.045454545454545456,
+        "any_citation": 0.09090909090909091,
+        "citation_precision": 0.25,
+        "abstained": 0.13636363636363635,
+        "mean_generate_seconds": 20.162650368182685
+      },
+      "rows": [
+        {
+          "question": "Why did exporting a dataset to CSV or JSON turn integer columns into floats, and how was that fixed?",
+          "retrieved_ids": [
+            "c6fc5cdbf0",
+            "adad35d93e",
+            "80061e03f2",
+            "c4f14de325",
+            "fd67320780"
+          ],
+          "answer": "The JSON, CSV and SQL writers call batch.to_pandas() with pyarrow's default integer_object_nulls=False, which casts any integer column containing a null to float64. This dropped the integer type on export and corrupted values past 2^53, which float64 cannot represent exactly. Pass integer_object_nulls=True so a null-containing integer column keeps Python integers (object dtype) and is written as integers. Columns without nulls are unaffected.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.05856359999597771,
+          "generate_seconds": 33.785367500000575,
+          "id": "q01",
+          "expected": "c6fc5cdbf0",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Which pandas versions silently ignored the on_bad_lines option when reading CSV files, and what caused it?",
+          "retrieved_ids": [
+            "89667468df",
+            "96549f3c74",
+            "7017b0965f",
+            "5eec91a1a8",
+            "60787dd3fd"
+          ],
+          "answer": "The pandas versions silently ignored the on_bad_lines option when reading CSV files due to a version check bug.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.032388499996159226,
+          "generate_seconds": 14.909140800002206,
+          "id": "q02",
+          "expected": "89667468df",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Was there a security problem where extracting an archive could write files to an attacker-chosen location through a symlink?",
+          "retrieved_ids": [
+            "ad2d853ae2",
+            "913b87c072",
+            "e693835eb1",
+            "ea7298bf12",
+            "50658bb4ee"
+          ],
+          "answer": "The existing safemembers() zip-slip mitigation only validates member names and is blind to the output directory itself being a symlink.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.03333040000143228,
+          "generate_seconds": 14.959177999997337,
+          "id": "q03",
+          "expected": "ad2d853ae2",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did resuming a streaming dataset after a filter call skip rows that had not been emitted yet?",
+          "retrieved_ids": [
+            "60787dd3fd",
+            "07515575dd",
+            "4e56ddf20a",
+            "656f8b2413",
+            "0f207a0a60"
+          ],
+          "answer": "SkipExamplesIterable.shard_data_sources returned self when split_when_sharding is False, so a skip() applied after split_dataset_by_node dropped the sharding and every rank iterated the whole dataset.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.04379099999641767,
+          "generate_seconds": 20.36149309999746,
+          "id": "q04",
+          "expected": "0f207a0a60",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "What goes wrong when some shards in a multi-process map produce only empty lists, and how was the schema conflict handled?",
+          "retrieved_ids": [
+            "fdd8a65fb5",
+            "3adab835c3",
+            "35a7f29c88",
+            "31ae21ff80",
+            "13b36ee5c6"
+          ],
+          "answer": "When using Dataset.map() with num_proc > 1, shards containing only empty lists get their features inferred as List(Struct({...})), which is incompatible with List(Value('null')) from shards with actual data.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.04791470000054687,
+          "generate_seconds": 23.257145199997467,
+          "id": "q05",
+          "expected": "fdd8a65fb5",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did decoding a PDF from a plain https or S3 URL fail with a TypeError about NoneType?",
+          "retrieved_ids": [
+            "a00625752a",
+            "656f8b2413",
+            "420e9819fd",
+            "2684a98fe3",
+            "d6d02813cd"
+          ],
+          "answer": "The decoding of a PDF from a plain HTTPS or S3 URL fails due to a TypeError raised by string_to_dict. This issue was fixed by adding a check for None in the lookup function.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.04441209999640705,
+          "generate_seconds": 17.32688269999926,
+          "id": "q06",
+          "expected": "a00625752a",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "What error came up when casting a LargeList column containing nulls to a different inner type?",
+          "retrieved_ids": [
+            "ccb615609c",
+            "c6fc5cdbf0",
+            "d22d1cb5f2",
+            "3634e165eb",
+            "f013aff823"
+          ],
+          "answer": "The retrieved commits do not cover this.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.031698699996923096,
+          "generate_seconds": 9.920544900000095,
+          "id": "q07",
+          "expected": "ccb615609c",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": true
+        },
+        {
+          "question": "Why did streaming reads of a private Lance dataset return 401 errors?",
+          "retrieved_ids": [
+            "3eceb30868",
+            "279c5bd486",
+            "06b6e020ca",
+            "69939ebf24",
+            "6ed837325c"
+          ],
+          "answer": "The retrieval of streaming reads from a private Lance dataset resulted in 401 errors due to issues with the storage_options lookup. This was resolved by fixing the split function in Lance._split_generators to correctly parse the scheme without splitting at all.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.024764900001173373,
+          "generate_seconds": 18.082806600003096,
+          "id": "q08",
+          "expected": "3eceb30868",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "How are FASTA or FASTQ records with carriage-return line endings handled now?",
+          "retrieved_ids": [
+            "c02c6e10b1",
+            "89f2bde68a",
+            "dc123127ef",
+            "87d2602de2",
+            "e60c99fbb6"
+          ],
+          "answer": "* feat(fasta): add lightweight FASTA file format support\n\nAdd native support for loading FASTA biological sequence files with zero external dependencies. This addresses feedback from PR #7851.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.021118199998454656,
+          "generate_seconds": 23.27496849999443,
+          "id": "q09",
+          "expected": "c02c6e10b1",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "After pushing a DatasetDict with fewer splits than before, why did the dataset become unloadable?",
+          "retrieved_ids": [
+            "6747b871de",
+            "365773b3ee",
+            "420e9819fd",
+            "c2f01705a3",
+            "f693f4e93a"
+          ],
+          "answer": "Drop removed splits from the dataset card when a push replaces the split set",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.0311647000053199,
+          "generate_seconds": 10.742841499995848,
+          "id": "q10",
+          "expected": "6747b871de",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why were examples yielded twice by the formatted Arrow iterator when features were not set?",
+          "retrieved_ids": [
+            "75e61d139f",
+            "770a091f18",
+            "bd6b888fd7",
+            "f05edc31cb",
+            "8874b25915"
+          ],
+          "answer": "The example was yielding twice due to a potential issue with the `formatting` parameter being set to `True`. This could lead to unexpected behavior where the example is yielded multiple times, which might cause issues during processing.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.02737679999700049,
+          "generate_seconds": 18.41332269999839,
+          "id": "q11",
+          "expected": "770a091f18",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did concatenating datasets along axis 1 drop the first source's columns on the Arrow fast path?",
+          "retrieved_ids": [
+            "b186e59b95",
+            "293d5d5ebe",
+            "7c79560e04",
+            "05c8e85105",
+            "65e224cc11"
+          ],
+          "answer": "HorizontallyConcatenatedMultiSourcesExamplesIterable._iter_arrow appended each column onto pa_table, leaking the loop variable from the fetch loop into the accumulator new_pa_table, causing the first source's columns to be dropped. Accumulate onto new_pa_table to match the Arrow fast path.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.03363399999943795,
+          "generate_seconds": 20.395168200004264,
+          "id": "q12",
+          "expected": "b186e59b95",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "How could an archive member escape into a sibling directory during extraction, and what replaced the startswith check?",
+          "retrieved_ids": [
+            "e693835eb1",
+            "ad2d853ae2",
+            "f989ef9b4c",
+            "4e56ddf20a",
+            "50658bb4ee"
+          ],
+          "answer": "The safemembers implementations blocked paths that resolved outside the output directory with a plain startswith(base) check, which also passes for sibling directories whose name starts with the output directory's name: extracting into .../extracted lets a member named ../extracted_evil/x write into .../extracted_evil.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.03105169999616919,
+          "generate_seconds": 27.1142189999955,
+          "id": "q13",
+          "expected": "e693835eb1",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did JSON schema inference give different results for files that begin with a byte-order mark?",
+          "retrieved_ids": [
+            "50658bb4ee",
+            "35a7f29c88",
+            "d86ec2c5b5",
+            "d374880576",
+            "e450bd3d5e"
+          ],
+          "answer": "A leading UTF-8 BOM made the first-batch mixed-struct pre-scan (ujson) raise ValueError, which was silently swallowed, so the schema-unification path ran instead and materialized spurious nulls. PyArrow tolerates the BOM, so the inferred schema depended on whether the file started with one. Strip the BOM so the pre-scan and PyArrow see the same bytes.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.03866849999758415,
+          "generate_seconds": 24.974137100005464,
+          "id": "q14",
+          "expected": "35a7f29c88",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did integer values in a fixed-shape array column come back as floats when a different row was null?",
+          "retrieved_ids": [
+            "adad35d93e",
+            "d22d1cb5f2",
+            "c6fc5cdbf0",
+            "fd67320780",
+            "521a590f9b"
+          ],
+          "answer": "A fixed-shape ArrayXD column that contains a null row was silently cast to float on the python read path (to_dict / to_pylist): non-null integers came back as floats and values above 2**53 lost precision, because an unrelated row was null.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.0352058999997098,
+          "generate_seconds": 23.941718499998387,
+          "id": "q15",
+          "expected": "adad35d93e",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did calling shuffle on a streaming DatasetDict raise a TypeError mentioning max_buffer_input_shards?",
+          "retrieved_ids": [
+            "636178ba91",
+            "6cfad60582",
+            "2c45eab1bb",
+            "d03ede1268",
+            "78061d2ee4"
+          ],
+          "answer": "[1]\nThe same argument's docstring entry states the default as 101000; the signature says 10, and the streaming docs say 10.\n\nThe retrieved commits do not cover this.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.035409500007517636,
+          "generate_seconds": 19.342365999997128,
+          "id": "q16",
+          "expected": "636178ba91",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": true
+        },
+        {
+          "question": "Why did batch with by_column crash with missing tables_accumulator arguments after sharding or shuffling?",
+          "retrieved_ids": [
+            "999790bcf5",
+            "2c45eab1bb",
+            "699ece777d",
+            "001d8b955a",
+            "d374880576"
+          ],
+          "answer": "[MappedExamplesIterable.shuffle_data_sources, shard_data_sources and reshard_data_sources did not forward is_batch_accumulate_arrow_table_function, so any re-created iterable (DataLoader workers, .shard(), .shuffle(), split_dataset_by_node) stopped injecting the tables_accumulator/length kwargs and the accumulate function crashed:]",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.029871200007619336,
+          "generate_seconds": 20.721951800005627,
+          "id": "q17",
+          "expected": "2c45eab1bb",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "What was done about the unhelpful FileNotFoundError when cache_file_name points into a directory that does not exist?",
+          "retrieved_ids": [
+            "93dc735012",
+            "656f8b2413",
+            "c0bec7d96f",
+            "c5a4b621f5",
+            "52b9273b5d"
+          ],
+          "answer": "[1] The loader dropped the encoding option because of a version check bug [0123456789].",
+          "cited_ids": [
+            "0123456789"
+          ],
+          "unsupported_citations": [
+            "0123456789"
+          ],
+          "retrieve_seconds": 0.06002169998828322,
+          "generate_seconds": 15.892952099995455,
+          "id": "q18",
+          "expected": "93dc735012",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did every rank iterate the whole dataset when skip was called after split_dataset_by_node?",
+          "retrieved_ids": [
+            "60787dd3fd",
+            "f7c04b53fb",
+            "9991c74de4",
+            "2c45eab1bb",
+            "025593f2f0"
+          ],
+          "answer": "SkipExamplesIterable.shard_data_sources returned self when split_when_sharding is False, so a skip() applied after split_dataset_by_node dropped the sharding and every rank iterated the whole dataset.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.034111000000848435,
+          "generate_seconds": 17.039383000010275,
+          "id": "q19",
+          "expected": "60787dd3fd",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did chaining two filter calls on a typed IterableDataset raise 'NoneType object is not a mapping'?",
+          "retrieved_ids": [
+            "07515575dd",
+            "521a590f9b",
+            "4e56ddf20a",
+            "a00625752a",
+            "aa92e272f9"
+          ],
+          "answer": "The retrieved commits do not cover this.\n\nWhen chaining multiple `.filter()` calls on an IterableDataset that has explicit features, the second call raised:\n\n    TypeError: 'NoneType' object is not a mapping\n\nRoot cause: after the first `.filter()`, the internal ex_iterable became \"typed\" (is_typed=True) because FilteredExamplesIterable adds a boolean mask column. In IterableDataset.filter(), the wrapped FormattedExamplesIterable was constructed with:\n\n    features=None if ex_iterable.is_typed else self._info.features\n\nThis caused FormattedExamplesIterable._features to be None.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.03489880000415724,
+          "generate_seconds": 39.63531789999979,
+          "id": "q20",
+          "expected": "07515575dd",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": true
+        },
+        {
+          "question": "Does to_pandas decode Json columns the same way to_dict does, or does it return raw storage strings?",
+          "retrieved_ids": [
+            "030a3e540e",
+            "e68a1989f7",
+            "fd794b4434",
+            "8910eda535",
+            "4428907a2f"
+          ],
+          "answer": "[030a3e540e] The loader dropped the encoding option because of a version check bug [0123456789].",
+          "cited_ids": [
+            "030a3e540e",
+            "0123456789"
+          ],
+          "unsupported_citations": [
+            "0123456789"
+          ],
+          "retrieve_seconds": 0.049259599996730685,
+          "generate_seconds": 18.644761900010053,
+          "id": "q21",
+          "expected": "030a3e540e",
+          "retrieval_hit": true,
+          "cited_expected": true,
+          "abstained": false
+        },
+        {
+          "question": "What happens if you pass a list of dicts instead of a function to Dataset.from_generator?",
+          "retrieved_ids": [
+            "b91070b9c0",
+            "4e56ddf20a",
+            "faada1742e",
+            "b2af98ca83",
+            "22d1d533e8"
+          ],
+          "answer": "* pass the dataset features to the IterableDataset.from_generator function",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.06394630001159385,
+          "generate_seconds": 10.842641100010951,
+          "id": "q22",
+          "expected": "4e56ddf20a",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        }
+      ]
+    },
+    "dense": {
+      "summary": {
+        "n": 22,
+        "retrieval_hit": 1.0,
+        "cited_expected": 0.13636363636363635,
+        "any_citation": 0.13636363636363635,
+        "citation_precision": 0.8333333333333334,
+        "abstained": 0.13636363636363635,
+        "mean_generate_seconds": 17.912930413635465
+      },
+      "rows": [
+        {
+          "question": "Why did exporting a dataset to CSV or JSON turn integer columns into floats, and how was that fixed?",
+          "retrieved_ids": [
+            "c6fc5cdbf0",
+            "e291b1dbd0",
+            "b065547654",
+            "521a590f9b",
+            "030a3e540e"
+          ],
+          "answer": "To fix this issue, ensure integer columns are kept as integers during export and import.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.022464399997261353,
+          "generate_seconds": 12.76884410000639,
+          "id": "q01",
+          "expected": "c6fc5cdbf0",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Which pandas versions silently ignored the on_bad_lines option when reading CSV files, and what caused it?",
+          "retrieved_ids": [
+            "89667468df",
+            "96549f3c74",
+            "91965eb438",
+            "db56f7f0d2",
+            "29ffc270da"
+          ],
+          "answer": "The pandas versions silently ignored on_bad_lines when reading CSV files due to the minor version comparison issue.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.025262399998609908,
+          "generate_seconds": 11.655406300007598,
+          "id": "q02",
+          "expected": "89667468df",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Was there a security problem where extracting an archive could write files to an attacker-chosen location through a symlink?",
+          "retrieved_ids": [
+            "ad2d853ae2",
+            "e693835eb1",
+            "f989ef9b4c",
+            "6681c36bba",
+            "eea1226779"
+          ],
+          "answer": "The existing safemembers() zip-slip mitigation only validates member names and is blind to the output directory itself being a symlink.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.02519620000384748,
+          "generate_seconds": 17.803124099998968,
+          "id": "q03",
+          "expected": "ad2d853ae2",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did resuming a streaming dataset after a filter call skip rows that had not been emitted yet?",
+          "retrieved_ids": [
+            "0f207a0a60",
+            "805ff93095",
+            "62fee304b9",
+            "f10d38b8b6",
+            "5dbf75fdfa"
+          ],
+          "answer": "handle empty datasets in filter",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.031433199997991323,
+          "generate_seconds": 7.252617599995574,
+          "id": "q04",
+          "expected": "0f207a0a60",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "What goes wrong when some shards in a multi-process map produce only empty lists, and how was the schema conflict handled?",
+          "retrieved_ids": [
+            "fdd8a65fb5",
+            "31ae21ff80",
+            "65434e449b",
+            "60787dd3fd",
+            "025593f2f0"
+          ],
+          "answer": "When using Dataset.map() with num_proc > 1, shards containing only empty lists get their features inferred as List(Value('null')), which is incompatible with List(Struct(...) from shards with actual data.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.031117899998207577,
+          "generate_seconds": 17.739704099993105,
+          "id": "q05",
+          "expected": "fdd8a65fb5",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did decoding a PDF from a plain https or S3 URL fail with a TypeError about NoneType?",
+          "retrieved_ids": [
+            "a00625752a",
+            "a1e50656c1",
+            "d8a998cf2d",
+            "aa1ba6b68f",
+            "6090f3cfb5"
+          ],
+          "answer": "fix(pdf): decode remote non-Hub PDF paths instead of raising TypeError",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.019621300001745112,
+          "generate_seconds": 10.353696399994078,
+          "id": "q06",
+          "expected": "a00625752a",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "What error came up when casting a LargeList column containing nulls to a different inner type?",
+          "retrieved_ids": [
+            "ccb615609c",
+            "8aef9e8b17",
+            "7e216d7e67",
+            "05fe5c06d4",
+            "d22d1cb5f2"
+          ],
+          "answer": "Fix casting a nullable LargeList to a different inner type",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.02580570000282023,
+          "generate_seconds": 8.750973399990471,
+          "id": "q07",
+          "expected": "ccb615609c",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did streaming reads of a private Lance dataset return 401 errors?",
+          "retrieved_ids": [
+            "3eceb30868",
+            "06b6e020ca",
+            "b4080cd057",
+            "be7689fb17",
+            "37361fe06e"
+          ],
+          "answer": "The retrieval of streaming reads from a private Lance dataset resulted in 401 errors due to issues with the `storage_options` lookup. This was resolved by fixing the `split(\"://\", 0)` behavior to correctly split the URL at the scheme part, ensuring that the `storage_options` dictionary is properly keyed by the bare scheme (\"hf\").",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.017851399999926798,
+          "generate_seconds": 23.003670799997053,
+          "id": "q08",
+          "expected": "3eceb30868",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "How are FASTA or FASTQ records with carriage-return line endings handled now?",
+          "retrieved_ids": [
+            "c02c6e10b1",
+            "89f2bde68a",
+            "dc123127ef",
+            "6548e0e282",
+            "6450a4f3e7"
+          ],
+          "answer": "* feat(fasta): add lightweight FASTA file format support\n\nAdd native support for loading FASTA biological sequence files with zero external dependencies. This addresses feedback from PR #7851.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.022906500002136454,
+          "generate_seconds": 22.995502499994473,
+          "id": "q09",
+          "expected": "c02c6e10b1",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "After pushing a DatasetDict with fewer splits than before, why did the dataset become unloadable?",
+          "retrieved_ids": [
+            "6747b871de",
+            "f693f4e93a",
+            "82e08594e4",
+            "636178ba91",
+            "025593f2f0"
+          ],
+          "answer": "Drop removed splits from the dataset card when a push replaces the split set",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.0189057999959914,
+          "generate_seconds": 11.14983249999932,
+          "id": "q10",
+          "expected": "6747b871de",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why were examples yielded twice by the formatted Arrow iterator when features were not set?",
+          "retrieved_ids": [
+            "bd6b888fd7",
+            "770a091f18",
+            "8874b25915",
+            "75e61d139f",
+            "7437d0f676"
+          ],
+          "answer": "Add support for arrow iterable when concatenating or interleaving datasets",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.019195899993064813,
+          "generate_seconds": 11.146762499993201,
+          "id": "q11",
+          "expected": "770a091f18",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did concatenating datasets along axis 1 drop the first source's columns on the Arrow fast path?",
+          "retrieved_ids": [
+            "b186e59b95",
+            "293d5d5ebe",
+            "7298e5af6f",
+            "3bfbc67ce7",
+            "f5826eff9b"
+          ],
+          "answer": "HorizontallyConcatenatedMultiSourcesExamplesIterable._iter_arrow appended each column onto pa_table, leaking the loop variable into the fetch loop, causing the first source's columns to be dropped. Reformulate the issue as described in the provided commits.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.030805799993686378,
+          "generate_seconds": 17.443737599998713,
+          "id": "q12",
+          "expected": "b186e59b95",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "How could an archive member escape into a sibling directory during extraction, and what replaced the startswith check?",
+          "retrieved_ids": [
+            "e693835eb1",
+            "ad2d853ae2",
+            "50658bb4ee",
+            "f989ef9b4c",
+            "eea1226779"
+          ],
+          "answer": "[1] The safemembers implementations blocked paths that resolved outside the output directory with a plain startswith(base) check, which also passes for sibling directories whose name starts with the output directory's name: extracting into .../extracted lets a member named ../extracted_evil/x write into .../extracted_evil.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.018651299993507564,
+          "generate_seconds": 27.820908100009547,
+          "id": "q13",
+          "expected": "e693835eb1",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did JSON schema inference give different results for files that begin with a byte-order mark?",
+          "retrieved_ids": [
+            "35a7f29c88",
+            "4bb6c6d46a",
+            "a136a92773",
+            "ff7dc9ee2e",
+            "622afa9131"
+          ],
+          "answer": "A leading UTF-8 BOM made the first-batch mixed-struct pre-scan (ujson) raise ValueError, which was silently swallowed, so the schema-unification path ran instead and materialized spurious nulls. PyArrow tolerates the BOM, so the inferred schema depended on whether the file started with one. Strip the BOM so the pre-scan and PyArrow see the same bytes.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.018503500003134832,
+          "generate_seconds": 25.130428100004792,
+          "id": "q14",
+          "expected": "35a7f29c88",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did integer values in a fixed-shape array column come back as floats when a different row was null?",
+          "retrieved_ids": [
+            "adad35d93e",
+            "521a590f9b",
+            "c6fc5cdbf0",
+            "d5807ff0bd",
+            "81ea724446"
+          ],
+          "answer": "The numpy format path is unchanged (to_numpy still returns the dense float64 array with np.nan for nulls), and the dynamic-first-dim branch is untouched.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.02847489999840036,
+          "generate_seconds": 16.35666140000103,
+          "id": "q15",
+          "expected": "adad35d93e",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did calling shuffle on a streaming DatasetDict raise a TypeError mentioning max_buffer_input_shards?",
+          "retrieved_ids": [
+            "636178ba91",
+            "78061d2ee4",
+            "6cfad60582",
+            "2a5149bef2",
+            "2c45eab1bb"
+          ],
+          "answer": "[636178ba91]\nThe same argument's docstring entry states the default as 101000; the signature says 10, and the streaming docs say 10.\n\nThe retrieved commits do not cover this.",
+          "cited_ids": [
+            "636178ba91"
+          ],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.024506100002327003,
+          "generate_seconds": 19.693310100003146,
+          "id": "q16",
+          "expected": "636178ba91",
+          "retrieval_hit": true,
+          "cited_expected": true,
+          "abstained": true
+        },
+        {
+          "question": "Why did batch with by_column crash with missing tables_accumulator arguments after sharding or shuffling?",
+          "retrieved_ids": [
+            "2c45eab1bb",
+            "999790bcf5",
+            "699ece777d",
+            "2a815ce234",
+            "d22d1cb5f2"
+          ],
+          "answer": "[MappedExamplesIterable.shuffle_data_sources, shard_data_sources and reshard_data_sources did not forward is_batch_accumulate_arrow_table_function, so any re-created iterable (DataLoader workers, .shard(), .shuffle(), split_dataset_by_node) stopped injecting the tables_accumulator/length kwargs and the accumulate function crashed]\n\nThe retrieved commits do not cover this.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.019356100005097687,
+          "generate_seconds": 26.06994549999945,
+          "id": "q17",
+          "expected": "2c45eab1bb",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": true
+        },
+        {
+          "question": "What was done about the unhelpful FileNotFoundError when cache_file_name points into a directory that does not exist?",
+          "retrieved_ids": [
+            "93dc735012",
+            "45508f7d88",
+            "97daa9a3ab",
+            "f34dba9faf",
+            "91b07b9091"
+          ],
+          "answer": "[1]",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.02923739999823738,
+          "generate_seconds": 6.323397100000875,
+          "id": "q18",
+          "expected": "93dc735012",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did every rank iterate the whole dataset when skip was called after split_dataset_by_node?",
+          "retrieved_ids": [
+            "60787dd3fd",
+            "637246baf9",
+            "f7c04b53fb",
+            "025593f2f0",
+            "18e1e1486e"
+          ],
+          "answer": "SkipExamplesIterable.shard_data_sources returned self when split_when_sharding is False, so a skip() applied after split_dataset_by_node dropped the sharding and every rank iterated the whole dataset.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.03340329999628011,
+          "generate_seconds": 15.18694189999951,
+          "id": "q19",
+          "expected": "60787dd3fd",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did chaining two filter calls on a typed IterableDataset raise 'NoneType object is not a mapping'?",
+          "retrieved_ids": [
+            "07515575dd",
+            "418b3bc8e4",
+            "807d5c5ed4",
+            "49bb250458",
+            "0f207a0a60"
+          ],
+          "answer": "The retrieved commits do not cover this.\n\n[1] id=07515575dd\ntitle: fix(iterable_dataset): preserve features when chaining filter() on typed IterableDataset\nbody: When chaining multiple .filter() calls on an IterableDataset that has\nexplicit features, the second call raised:\n\n    TypeError: 'NoneType' object is not a mapping\n\nRoot cause: after the first .filter(), the internal ex_iterable became \"typed\"\n(called \"iterable_dataset.filter\") because FilteredExamplesIterable adds a boolean\nmask column.  In IterableDataset.filter(), the wrapped FormattedExamplesIterable\nwas constructed with:\n\n    features=None if ex_iterable.is_typed else self._info.features\n\nThis caused FormattedExamplesIterable._features to be None.\nFilteredExamplesIterable.__init__ then tried to build:\n\n    Features({**ex_iterable.features, mask_col: Value(\"bool\")})\n\nwhere ex_iterable.features was None, raising the TypeError",
+          "cited_ids": [
+            "07515575dd"
+          ],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.025721099998918362,
+          "generate_seconds": 57.72290589999466,
+          "id": "q20",
+          "expected": "07515575dd",
+          "retrieval_hit": true,
+          "cited_expected": true,
+          "abstained": true
+        },
+        {
+          "question": "Does to_pandas decode Json columns the same way to_dict does, or does it return raw storage strings?",
+          "retrieved_ids": [
+            "030a3e540e",
+            "d21c5816d5",
+            "6254bafeb3",
+            "fd67320780",
+            "e8e31dd79b"
+          ],
+          "answer": "[030a3e540e]\nThe loader dropped the encoding option because of a version check bug [0123456789].",
+          "cited_ids": [
+            "030a3e540e",
+            "0123456789"
+          ],
+          "unsupported_citations": [
+            "0123456789"
+          ],
+          "retrieve_seconds": 0.02067650000390131,
+          "generate_seconds": 19.635808799997903,
+          "id": "q21",
+          "expected": "030a3e540e",
+          "retrieval_hit": true,
+          "cited_expected": true,
+          "abstained": false
+        },
+        {
+          "question": "What happens if you pass a list of dicts instead of a function to Dataset.from_generator?",
+          "retrieved_ids": [
+            "b91070b9c0",
+            "13b431aa14",
+            "8983782529",
+            "4e56ddf20a",
+            "a8893e6842"
+          ],
+          "answer": "* pass the dataset features to the IterableDataset.from_generator function",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.029215399990789592,
+          "generate_seconds": 8.080290300000343,
+          "id": "q22",
+          "expected": "4e56ddf20a",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        }
+      ]
+    },
+    "hybrid": {
+      "summary": {
+        "n": 22,
+        "retrieval_hit": 1.0,
+        "cited_expected": 0.09090909090909091,
+        "any_citation": 0.09090909090909091,
+        "citation_precision": 0.75,
+        "abstained": 0.13636363636363635,
+        "mean_generate_seconds": 20.50927993181606
+      },
+      "rows": [
+        {
+          "question": "Why did exporting a dataset to CSV or JSON turn integer columns into floats, and how was that fixed?",
+          "retrieved_ids": [
+            "c6fc5cdbf0",
+            "adad35d93e",
+            "c4f14de325",
+            "b065547654",
+            "030a3e540e"
+          ],
+          "answer": "The JSON, CSV and SQL writers call batch.to_pandas() with pyarrow's default integer_object_nulls=False, which casts any integer column containing a null to float64. This dropped the integer type on export and corrupted values past 2^53, which float64 cannot represent exactly. Pass integer_object_nulls=True so a null-containing integer column keeps Python integers (object dtype) and is written as integers. Columns without nulls are unaffected.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.06853620000765659,
+          "generate_seconds": 29.271584100002656,
+          "id": "q01",
+          "expected": "c6fc5cdbf0",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Which pandas versions silently ignored the on_bad_lines option when reading CSV files, and what caused it?",
+          "retrieved_ids": [
+            "89667468df",
+            "96549f3c74",
+            "91965eb438",
+            "db56f7f0d2",
+            "c6fc5cdbf0"
+          ],
+          "answer": "The pandas versions silently ignored the on_bad_lines option when reading CSV files due to a version check bug.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.05267610000737477,
+          "generate_seconds": 13.673845200013602,
+          "id": "q02",
+          "expected": "89667468df",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Was there a security problem where extracting an archive could write files to an attacker-chosen location through a symlink?",
+          "retrieved_ids": [
+            "ad2d853ae2",
+            "e693835eb1",
+            "f989ef9b4c",
+            "50658bb4ee",
+            "eea1226779"
+          ],
+          "answer": "The existing safemembers() zip-slip mitigation only validates member names and is blind to the output directory itself being a symlink.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.08862039999803528,
+          "generate_seconds": 22.992524499990395,
+          "id": "q03",
+          "expected": "ad2d853ae2",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did resuming a streaming dataset after a filter call skip rows that had not been emitted yet?",
+          "retrieved_ids": [
+            "0f207a0a60",
+            "2a815ce234",
+            "41adfd0f9e",
+            "5dbf75fdfa",
+            "60787dd3fd"
+          ],
+          "answer": "Rebatch arrow source before formatting in IterableDataset.filter",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.07877960000769235,
+          "generate_seconds": 15.299268099988694,
+          "id": "q04",
+          "expected": "0f207a0a60",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "What goes wrong when some shards in a multi-process map produce only empty lists, and how was the schema conflict handled?",
+          "retrieved_ids": [
+            "fdd8a65fb5",
+            "31ae21ff80",
+            "3adab835c3",
+            "60787dd3fd",
+            "b9efdc64c3"
+          ],
+          "answer": "When using Dataset.map() with num_proc > 1, shards containing only empty lists get their features inferred as List(Value('null')), which is incompatible with List(Struct(...) from shards with actual data.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.06145730000571348,
+          "generate_seconds": 24.043028599990066,
+          "id": "q05",
+          "expected": "fdd8a65fb5",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did decoding a PDF from a plain https or S3 URL fail with a TypeError about NoneType?",
+          "retrieved_ids": [
+            "a00625752a",
+            "110d2de7c2",
+            "4e56ddf20a",
+            "94ccd1b4fa",
+            "656f8b2413"
+          ],
+          "answer": "The retrieved commits do not cover this.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.07247430000279564,
+          "generate_seconds": 10.072951899986947,
+          "id": "q06",
+          "expected": "a00625752a",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": true
+        },
+        {
+          "question": "What error came up when casting a LargeList column containing nulls to a different inner type?",
+          "retrieved_ids": [
+            "ccb615609c",
+            "d22d1cb5f2",
+            "c6fc5cdbf0",
+            "88f646c418",
+            "adad35d93e"
+          ],
+          "answer": "The error came up when casting a LargeList column containing nulls to a different inner type.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.04895280000346247,
+          "generate_seconds": 12.896890300005907,
+          "id": "q07",
+          "expected": "ccb615609c",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did streaming reads of a private Lance dataset return 401 errors?",
+          "retrieved_ids": [
+            "3eceb30868",
+            "06b6e020ca",
+            "279c5bd486",
+            "69939ebf24",
+            "be7689fb17"
+          ],
+          "answer": "The retrieval of streaming reads from a private Lance dataset caused 401 errors due to the incorrect handling of the storage_options dictionary.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.04658650000055786,
+          "generate_seconds": 12.883387900001253,
+          "id": "q08",
+          "expected": "3eceb30868",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "How are FASTA or FASTQ records with carriage-return line endings handled now?",
+          "retrieved_ids": [
+            "c02c6e10b1",
+            "89f2bde68a",
+            "dc123127ef",
+            "282379fbd5",
+            "8773bc5544"
+          ],
+          "answer": "* feat(fasta): add lightweight FASTA file format support\n\nAdd native support for loading FASTA biological sequence files with zero external dependencies. This addresses feedback from PR #7851.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.040068000002065673,
+          "generate_seconds": 21.996335100004217,
+          "id": "q09",
+          "expected": "c02c6e10b1",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "After pushing a DatasetDict with fewer splits than before, why did the dataset become unloadable?",
+          "retrieved_ids": [
+            "6747b871de",
+            "f693f4e93a",
+            "2c45eab1bb",
+            "82e08594e4",
+            "d78f07091b"
+          ],
+          "answer": "Drop removed splits from the dataset card when a push replaces the split set",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.2003499999991618,
+          "generate_seconds": 11.513124799996149,
+          "id": "q10",
+          "expected": "6747b871de",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why were examples yielded twice by the formatted Arrow iterator when features were not set?",
+          "retrieved_ids": [
+            "bd6b888fd7",
+            "770a091f18",
+            "75e61d139f",
+            "8874b25915",
+            "07515575dd"
+          ],
+          "answer": "The formatted Arrow iterator yielded examples twice because filtering on typed IterableDataset resulted in an \"NoneType\" object being passed as the features parameter, causing the `Features` class to raise a TypeError.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.06160319999617059,
+          "generate_seconds": 20.74926699999196,
+          "id": "q11",
+          "expected": "770a091f18",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did concatenating datasets along axis 1 drop the first source's columns on the Arrow fast path?",
+          "retrieved_ids": [
+            "b186e59b95",
+            "293d5d5ebe",
+            "1ea4d091b7",
+            "bd6b888fd7",
+            "0f207a0a60"
+          ],
+          "answer": "The retrieved commits do not cover this.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.05414409999502823,
+          "generate_seconds": 9.107863199998974,
+          "id": "q12",
+          "expected": "b186e59b95",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": true
+        },
+        {
+          "question": "How could an archive member escape into a sibling directory during extraction, and what replaced the startswith check?",
+          "retrieved_ids": [
+            "e693835eb1",
+            "ad2d853ae2",
+            "f989ef9b4c",
+            "50658bb4ee",
+            "c3f39c84bd"
+          ],
+          "answer": "[1] The safemembers implementations blocked paths that resolved outside the output directory with a plain startswith(base) check, which also passes for sibling directories whose name starts with the output directory's name: extracting into .../extracted lets a member named ../extracted_evil/x write into .../extracted_evil.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.0687500999920303,
+          "generate_seconds": 28.008721799997147,
+          "id": "q13",
+          "expected": "e693835eb1",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did JSON schema inference give different results for files that begin with a byte-order mark?",
+          "retrieved_ids": [
+            "35a7f29c88",
+            "d374880576",
+            "e450bd3d5e",
+            "22b7baed53",
+            "50658bb4ee"
+          ],
+          "answer": "A leading UTF-8 BOM made the first-batch mixed-struct pre-scan (ujson) raise ValueError, which was silently swallowed, so the schema-unification path ran instead and materialized spurious nulls. PyArrow tolerates the BOM, so the inferred schema depended on whether the file started with one. Strip the BOM so the pre-scan and PyArrow see the same bytes.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.08811559999594465,
+          "generate_seconds": 24.545745800001896,
+          "id": "q14",
+          "expected": "35a7f29c88",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did integer values in a fixed-shape array column come back as floats when a different row was null?",
+          "retrieved_ids": [
+            "adad35d93e",
+            "c6fc5cdbf0",
+            "521a590f9b",
+            "d22d1cb5f2",
+            "ccb615609c"
+          ],
+          "answer": "The numpy format path is unchanged (to_numpy still returns the dense float64 array with np.nan for nulls), and the dynamic-first-dim branch is untouched.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.05702300000120886,
+          "generate_seconds": 18.700550299996394,
+          "id": "q15",
+          "expected": "adad35d93e",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did calling shuffle on a streaming DatasetDict raise a TypeError mentioning max_buffer_input_shards?",
+          "retrieved_ids": [
+            "636178ba91",
+            "6cfad60582",
+            "78061d2ee4",
+            "2c45eab1bb",
+            "2a5149bef2"
+          ],
+          "answer": "The same argument's docstring entry states the default as 101000; the signature says 10, and the streaming docs say 10.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.05582390000927262,
+          "generate_seconds": 15.176132099993993,
+          "id": "q16",
+          "expected": "636178ba91",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did batch with by_column crash with missing tables_accumulator arguments after sharding or shuffling?",
+          "retrieved_ids": [
+            "999790bcf5",
+            "2c45eab1bb",
+            "699ece777d",
+            "d03ede1268",
+            "2a815ce234"
+          ],
+          "answer": "[Merge data sources into batches](https://github.com/apache/incubator-yarn/pull/1044)\n[Optimizing PyArrow block shuffling with dynamic rebatched chunk interleaving](https://github.com/apache/incubator-yarn/pull/1045)\n[Optimize PyArrow block shuffling with dynamic rebatched chunk interleaving](https://github.com/apache/incubator-yarn/pull/1045)\n[Optimize PyArrow block shuffling with dynamic rebatched chunk interleaving](https://github.com/apache/incubator-yarn/pull/1045)",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.04827250000380445,
+          "generate_seconds": 40.579884399994626,
+          "id": "q17",
+          "expected": "2c45eab1bb",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "What was done about the unhelpful FileNotFoundError when cache_file_name points into a directory that does not exist?",
+          "retrieved_ids": [
+            "93dc735012",
+            "f34dba9faf",
+            "c5a4b621f5",
+            "52b9273b5d",
+            "ad2d853ae2"
+          ],
+          "answer": "raise filenotfound",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.07774040001095273,
+          "generate_seconds": 11.103812000001199,
+          "id": "q18",
+          "expected": "93dc735012",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did every rank iterate the whole dataset when skip was called after split_dataset_by_node?",
+          "retrieved_ids": [
+            "60787dd3fd",
+            "f7c04b53fb",
+            "9991c74de4",
+            "025593f2f0",
+            "2c45eab1bb"
+          ],
+          "answer": "SkipExamplesIterable.shard_data_sources returned self when split_when_sharding is False, so a skip() applied after split_dataset_by_node dropped the sharding and every rank iterated the whole dataset.",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.05648289999226108,
+          "generate_seconds": 17.643476199998986,
+          "id": "q19",
+          "expected": "60787dd3fd",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        },
+        {
+          "question": "Why did chaining two filter calls on a typed IterableDataset raise 'NoneType object is not a mapping'?",
+          "retrieved_ids": [
+            "07515575dd",
+            "807d5c5ed4",
+            "0f207a0a60",
+            "aa92e272f9",
+            "2a815ce234"
+          ],
+          "answer": "The retrieved commits do not cover this.\n\n[1] id=07515575dd\ntitle: fix(iterable_dataset): preserve features when chaining filter() on typed IterableDataset\nbody: When chaining multiple .filter() calls on an IterableDataset that has\nexplicit features, the second call raised:\n\n    TypeError: 'NoneType' object is not a mapping\n\nRoot cause: after the first .filter(), the internal ex_iterable became \"typed\"\n(called \"tied\") because FilteredExamplesIterable adds a boolean mask column. In\nIterableDataset.filter(), the wrapped FormattedExamplesIterable was constructed\nwith:\n\n    features=None if ex_iterable.is_typed else self._info.features\n\nThis caused FormattedExamplesIterable._features to be None.\nFilteredExamplesIterable.__init__ then tried to build:\n\n    Features({**ex_iterable.features, mask_col: Value(\"bool\")})\n\nwhere ex_iterable.features was None, raising the TypeError.",
+          "cited_ids": [
+            "07515575dd"
+          ],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.0547558999969624,
+          "generate_seconds": 60.9732093999919,
+          "id": "q20",
+          "expected": "07515575dd",
+          "retrieval_hit": true,
+          "cited_expected": true,
+          "abstained": true
+        },
+        {
+          "question": "Does to_pandas decode Json columns the same way to_dict does, or does it return raw storage strings?",
+          "retrieved_ids": [
+            "030a3e540e",
+            "d21c5816d5",
+            "6254bafeb3",
+            "fd67320780",
+            "e8e31dd79b"
+          ],
+          "answer": "[030a3e540e]\nThe loader dropped the encoding option because of a version check bug [0123456789].",
+          "cited_ids": [
+            "030a3e540e",
+            "0123456789"
+          ],
+          "unsupported_citations": [
+            "0123456789"
+          ],
+          "retrieve_seconds": 0.06362939999962691,
+          "generate_seconds": 18.149079700000584,
+          "id": "q21",
+          "expected": "030a3e540e",
+          "retrieval_hit": true,
+          "cited_expected": true,
+          "abstained": false
+        },
+        {
+          "question": "What happens if you pass a list of dicts instead of a function to Dataset.from_generator?",
+          "retrieved_ids": [
+            "b91070b9c0",
+            "4e56ddf20a",
+            "faada1742e",
+            "22d1d533e8",
+            "a8893e6842"
+          ],
+          "answer": "* passing a list of dicts instead of a function to Dataset.from_generator will raise a TypeError: 'list' object is not callable",
+          "cited_ids": [],
+          "unsupported_citations": [],
+          "retrieve_seconds": 0.0658668999967631,
+          "generate_seconds": 11.823476100005792,
+          "id": "q22",
+          "expected": "4e56ddf20a",
+          "retrieval_hit": true,
+          "cited_expected": false,
+          "abstained": false
+        }
+      ]
+    }
+  }
+}

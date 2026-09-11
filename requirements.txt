@@ -2,3 +2,6 @@ sentence-transformers>=3.0.0
 faiss-cpu>=1.8.0
 numpy>=1.26
 scikit-learn>=1.4
+transformers>=4.45
+# optional, only for --backend claude:
+# anthropic>=1.0
