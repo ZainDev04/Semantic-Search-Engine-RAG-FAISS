@@ -3,5 +3,7 @@ faiss-cpu>=1.8.0
 numpy>=1.26
 scikit-learn>=1.4
 transformers>=4.45
+streamlit>=1.40      # app.py demo
+pytest>=8.0          # tests/
 # optional, only for --backend claude:
 # anthropic>=1.0
