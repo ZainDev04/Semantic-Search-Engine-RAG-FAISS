@@ -7,6 +7,54 @@ The corpus is 2,500 unique commit messages from [huggingface/datasets](https://g
 1. **Self-retrieval (2,500 docs, 200 queries):** a commit's title has to find its own body. Keyword search (BM25) wins. This task is extractive by construction, so that is expected once you look at the data.
 2. **Question answering (22 hand-written questions):** paraphrased questions a developer might actually ask. Dense retrieval finds the right commit at rank 1 more often than BM25 (20/22 vs 17/22). A 0.5B-parameter local model then answers from the retrieved commits, and its citation behaviour is measured against a no-model extractive baseline, which it does not beat.
 
+## What it looks like
+
+Question q04 from the question set, where the two retrievers disagree. The answering commit is `0f207a0a60`. BM25 ranks it fifth; dense retrieval ranks it first.
+
+```
+$ python search.py "Why did resuming a streaming dataset after a filter call skip rows that had not been emitted yet?" --method bm25
+Method: BM25 keyword
+1. [16.4102] Shard the sources when skipping a distributed IterableDataset  (60787dd3fd, 2026-09-10)
+2. [16.3944] fix(iterable_dataset): preserve features when chaining filter() on typed IterableDataset  (07515575dd, 2026-03-10)
+3. [15.5761] Reject a non-callable generator in GeneratorConfig  (4e56ddf20a, 2026-09-10)
+4. [15.0428] Add note about the name of a dataset script  (656f8b2413, 2022-11-04)
+5. [14.3690] Rebatch arrow source before formatting in IterableDataset.filter to fix resume data loss  (0f207a0a60, 2026-07-24)
+
+$ python search.py "Why did resuming a streaming dataset after a filter call skip rows that had not been emitted yet?" --method dense
+Method: dense (all-MiniLM-L6-v2)
+1. [0.5219] Rebatch arrow source before formatting in IterableDataset.filter to fix resume data loss  (0f207a0a60, 2026-07-24)
+2. [0.4803] Avoid content-encoding issue while streaming datasets  (805ff93095, 2021-12-01)
+3. [0.4774] Fix filter with empty indices  (62fee304b9, 2022-10-07)
+4. [0.4446] Support streaming swda dataset  (f10d38b8b6, 2022-08-30)
+5. [0.4329] Fix streaming datasets that are not reset correctly  (5dbf75fdfa, 2022-01-28)
+```
+
+The same pipeline with generation and the citation check, using the extractive backend (no model):
+
+```
+$ python rag.py "Why did streaming reads of a private Lance dataset return 401 errors?" --retriever dense --backend extractive
+Retriever: dense (all-MiniLM-L6-v2)
+Generator: extractive (top-1 commit, no model)
+Retrieved:
+  3eceb30868  Fix storage_options lookup for streaming Lance datasets
+  06b6e020ca  Add lance format support
+  b4080cd057  Extend support for streaming datasets that use pd.read_excel
+  be7689fb17  Support streaming hendrycks_test dataset.
+  37361fe06e  Support streaming compguesswhat dataset
+Answer:
+Fix storage_options lookup for streaming Lance datasets. In Lance._split_generators, the storage_options lookup used
+files[0].split("://", 0)[0] + "://", which has two bugs that
+compound: split("://", 0) does not split at all (maxsplit=0),
+and the storage_options dict is keyed by the bare scheme
+("hf"), not "hf://". The lookup therefore always returned
+None, dropping the HF token before it reached lance.dataset
+and causing 401s for streaming reads of pr [3eceb30868]
+Cited: ['3eceb30868']
+retrieval 0.02s, generation 0.0s
+```
+
+Swap `--backend extractive` for `--backend local` to have Qwen2.5-0.5B write the answer instead (about 20 s on CPU), or `--backend claude` with an API key.
+
 ## Part 1: retrieval
 
 Four retrieval methods are compared on the same label-free task:
