@@ -30,7 +30,9 @@ REPO_URL = "https://github.com/huggingface/datasets.git"
 CLONE_DIR = Path(__file__).parent / "data_src" / "repo"
 OUT_PATH = Path(__file__).parent / "data" / "commits.jsonl"
 
-PR_SUFFIX = re.compile(r"\s*\(#\d+\)\s*$")
+# One or more: a cherry-pick onto a release branch gets a second "(#NNNN)"
+# appended, so "Title (#8241) (#8300)" is common.
+PR_SUFFIX = re.compile(r"(\s*\(#\d+\))+\s*$")
 TRAILER = re.compile(r"^(co-authored-by|signed-off-by|reviewed-by|acked-by|tested-by|cc):", re.I)
 
 RECORD_SEP = "\x1e"

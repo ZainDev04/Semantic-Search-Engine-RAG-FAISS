@@ -7,7 +7,17 @@ The corpus is 2,500 unique commit messages from [huggingface/datasets](https://g
 1. **Self-retrieval (2,500 docs, 200 queries):** a commit's title has to find its own body. Keyword search (BM25) wins. This task is extractive by construction, so that is expected once you look at the data.
 2. **Question answering (22 hand-written questions):** paraphrased questions a developer might actually ask. Dense retrieval finds the right commit at rank 1 more often than BM25 (20/22 vs 17/22). A 0.5B-parameter local model then answers from the retrieved commits, and its citation behaviour is measured against a no-model extractive baseline, which it does not beat.
 
-## What it looks like
+## Demo
+
+```
+streamlit run app.py
+```
+
+![Streamlit demo: hybrid retrieval on the left, answer and citation check on the right](assets/demo.png)
+
+Pick a retriever, ask a question, and optionally turn on generation. Every id the model cites is checked against the retrieved set and shown green (retrieved) or red (fabricated). `?q=<question>&answer=1` in the URL pre-fills the page.
+
+## What it looks like on the command line
 
 Question q04 from the question set, where the two retrievers disagree. The answering commit is `0f207a0a60`. BM25 ranks it fifth; dense retrieval ranks it first.
 
@@ -74,14 +84,14 @@ Queries are also split into two halves of 100: titles whose every word (3+ chara
 
 | method | R@5 | R@10 | MRR | MRR, partial overlap | MRR, full overlap |
 |---|---|---|---|---|---|
-| BM25 keyword | **0.835** | 0.860 | **0.727** | **0.535** | **0.919** |
-| LSA (200d) | 0.505 | 0.585 | 0.361 | 0.259 | 0.464 |
-| dense, all-MiniLM-L6-v2 (22M) | 0.720 | 0.805 | 0.600 | 0.407 | 0.794 |
-| dense, bge-small-en-v1.5 (33M) | 0.725 | 0.780 | 0.653 | 0.437 | 0.869 |
-| dense, all-mpnet-base-v2 (110M) | 0.725 | 0.780 | 0.584 | 0.398 | 0.771 |
-| hybrid, BM25 + MiniLM | 0.830 | **0.865** | 0.720 | **0.535** | 0.905 |
-| hybrid, BM25 + bge-small | 0.775 | 0.850 | 0.701 | 0.500 | 0.901 |
-| hybrid, BM25 + mpnet | 0.795 | 0.855 | 0.705 | 0.525 | 0.885 |
+| BM25 keyword | **0.835** | 0.860 | **0.727** | **0.531** | **0.920** |
+| LSA (200d) | 0.505 | 0.585 | 0.361 | 0.262 | 0.459 |
+| dense, all-MiniLM-L6-v2 (22M) | 0.725 | 0.810 | 0.603 | 0.411 | 0.791 |
+| dense, bge-small-en-v1.5 (33M) | 0.725 | 0.785 | 0.654 | 0.433 | 0.870 |
+| dense, all-mpnet-base-v2 (110M) | 0.725 | 0.780 | 0.582 | 0.397 | 0.763 |
+| hybrid, BM25 + MiniLM | 0.830 | **0.865** | 0.720 | **0.531** | 0.906 |
+| hybrid, BM25 + bge-small | 0.775 | 0.845 | 0.700 | 0.495 | 0.901 |
+| hybrid, BM25 + mpnet | 0.795 | 0.855 | 0.703 | 0.522 | 0.881 |
 
 Raw output, including per-query latency, is in `results/`, one file per dense model. The random seed is fixed (0), so the sample is reproducible.
 
@@ -89,7 +99,7 @@ Raw output, including per-query latency, is in `results/`, one file per dense mo
 
 **Keyword search wins this task, and that is a property of the task.** A commit's title and body are written by the same person about the same change, minutes apart. Half the sampled titles have every word present in the body, and the median overlap is 1.0. Titles reuse exact identifiers (`CastError`, `data_dir`, `push_to_hub`) that BM25 matches literally and that a general-purpose embedding model treats as low-information tokens. This is close to the best case for lexical search. Queries that paraphrase and use different vocabulary should look different, and Part 2 below checks that with a small hand-written question set.
 
-**Dense retrieval alone is clearly behind, even on the partial-overlap half.** The best dense model (bge-small) reaches 0.653 MRR against BM25's 0.727, and 0.437 against 0.535 on the harder half. So the embedding models are not rescuing the queries where keywords fail; they are losing on those too.
+**Dense retrieval alone is clearly behind, even on the partial-overlap half.** The best dense model (bge-small) reaches 0.654 MRR against BM25's 0.727, and 0.433 against 0.531 on the harder half. So the embedding models are not rescuing the queries where keywords fail; they are losing on those too.
 
 **Bigger is not better.** bge-small (33M parameters) is the best dense model, and all-mpnet-base-v2 (110M) lands below MiniLM (22M) while being four to five times slower per query. Training data and objective decided this, not size. None of the three was trained on code or commit text.
 
@@ -156,7 +166,7 @@ Results with the local model (k = 5, greedy decoding, `results/rag_*.json`):
 
 Three things in the raw `git log` output distorted the evaluation for every method and were removed in `fetch_data.py`:
 
-- the `(#1234)` PR-number suffix GitHub appends to squash-merged titles (present on about 84% of commits, never in the body, never something a person would search for);
+- the `(#1234)` PR-number suffix GitHub appends to squash-merged titles (present on about 84% of commits, never in the body, never something a person would search for). Cherry-picks onto release branches carry two of them, `Title (#8241) (#8300)`; the first version of the regex only stripped one, and a dataset test caught the 12 survivors;
 - git trailer lines (`Co-authored-by:`, `Signed-off-by:`) in bodies, which left some bodies with no actual content;
 - duplicate commits: `git log --all` walks every branch, so cherry-picks and release-branch commits appeared under several hashes. Before deduplication 12% of the corpus was a repeat of another document, and the "correct" body could lose rank 1 to its own twin.
 
@@ -185,6 +195,13 @@ python evaluate_rag.py --backend extractive                              # secon
 python evaluate_rag.py                                                   # local model, ~30 min on CPU
 ```
 
+```
+python -m pytest                                                         # 40 tests, a few seconds, no model download
+streamlit run app.py                                                     # browser demo
+```
+
+The tests cover the BM25 scoring formula, reciprocal rank fusion, LSA, the data cleaning rules, the evaluation metrics, the citation checker, and the integrity of the committed dataset (size, uniqueness, cleaning, every question points at a real commit). They run without torch so they are fast enough to run on every change.
+
 `data/commits.jsonl` is committed, so nothing needs to be cloned to run the above. To rebuild it from a fresh metadata-only clone of the source repo:
 
 ```
@@ -202,7 +219,10 @@ search.py            command-line search
 evaluate.py          self-retrieval evaluation with overlap split; writes results/<model>.json
 rag.py               retrieve -> generate -> check citations; extractive / local / claude backends
 evaluate_rag.py      runs the question set through every retriever; writes results/rag_<backend>.json
+app.py               Streamlit demo: retriever picker, ranked commits, answer with citation check
+tests/               pytest suite; runs without torch
 data/commits.jsonl   2,500 cleaned commit records: id, title, body, text, author, date
 data/questions.jsonl 22 hand-written questions with the commit that answers each
 results/*.json       raw evaluation output, retrieval and RAG
+assets/demo.png      screenshot of the demo
 ```
