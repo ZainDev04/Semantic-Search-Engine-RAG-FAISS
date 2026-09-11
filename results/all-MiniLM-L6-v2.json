@@ -1,0 +1,77 @@
+{
+  "dense_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "corpus_size": 2500,
+  "sample_size": 200,
+  "seed": 0,
+  "overlap_threshold": 1.0,
+  "methods": {
+    "BM25 keyword": {
+      "n_queries": 200,
+      "recall_at_5": 0.835,
+      "recall_at_10": 0.86,
+      "mrr": 0.7274861111111112,
+      "ms_per_query": 25.282562499996857,
+      "by_overlap": {
+        "low_overlap": {
+          "n": 100,
+          "mrr": 0.5354722222222222
+        },
+        "high_overlap": {
+          "n": 100,
+          "mrr": 0.9195
+        }
+      }
+    },
+    "LSA (tf-idf + SVD, 200d)": {
+      "n_queries": 200,
+      "recall_at_5": 0.505,
+      "recall_at_10": 0.585,
+      "mrr": 0.36141468253968256,
+      "ms_per_query": 4.28065100000822,
+      "by_overlap": {
+        "low_overlap": {
+          "n": 100,
+          "mrr": 0.25919444444444445
+        },
+        "high_overlap": {
+          "n": 100,
+          "mrr": 0.4636349206349206
+        }
+      }
+    },
+    "dense (all-MiniLM-L6-v2)": {
+      "n_queries": 200,
+      "recall_at_5": 0.72,
+      "recall_at_10": 0.805,
+      "mrr": 0.600172619047619,
+      "ms_per_query": 22.647406500000216,
+      "by_overlap": {
+        "low_overlap": {
+          "n": 100,
+          "mrr": 0.4067063492063492
+        },
+        "high_overlap": {
+          "n": 100,
+          "mrr": 0.7936388888888889
+        }
+      }
+    },
+    "hybrid RRF (BM25 keyword + dense)": {
+      "n_queries": 200,
+      "recall_at_5": 0.83,
+      "recall_at_10": 0.865,
+      "mrr": 0.7203730158730158,
+      "ms_per_query": 51.34665699999459,
+      "by_overlap": {
+        "low_overlap": {
+          "n": 100,
+          "mrr": 0.5354126984126983
+        },
+        "high_overlap": {
+          "n": 100,
+          "mrr": 0.9053333333333333
+        }
+      }
+    }
+  }
+}
