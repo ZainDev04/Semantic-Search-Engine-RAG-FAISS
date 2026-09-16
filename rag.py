@@ -5,19 +5,23 @@ Retrieval-augmented generation over the commit corpus.
              -> language model writes an answer citing commit ids
              -> citations are checked against what was actually retrieved
 
-Three generation backends:
+Four generation backends:
 
     extractive  no model at all: returns the top-1 commit's title and body,
                 cited. Sets the floor a generator has to beat. If a language
                 model cannot outperform "print the best search result", it is
                 not adding anything.
 
-    local   Qwen2.5-0.5B-Instruct through `transformers`, on CPU. No API key,
-            no cost, reproducible by anyone who clones the repo. Small enough
-            for an 8 GB machine; pass --model to use a larger one.
-    claude  Anthropic API (claude-opus-5). Needs ANTHROPIC_API_KEY. Better
-            answers; not used for the committed numbers because the results
-            in this repo must be reproducible without a paid key.
+    local     Qwen2.5-0.5B-Instruct through `transformers`, on CPU. No API
+              key, no cost, reproducible by anyone who clones the repo. Small
+              enough for an 8 GB machine; pass --model to use a larger one.
+    llamacpp  a running llama.cpp server (OpenAI-compatible HTTP API). Used
+              for Qwen2.5-3B-Instruct in 4-bit GGUF, which is the only way a
+              3B model fits next to the retriever on 8 GB of RAM. URL from
+              LLAMACPP_URL, default http://127.0.0.1:8080.
+    claude    Anthropic API (claude-opus-5). Needs ANTHROPIC_API_KEY. Better
+              answers; not used for the committed numbers because the results
+              in this repo must be reproducible without a paid key.
 
 Citations are the part that gets measured. The model is told to cite commit
 ids in square brackets, e.g. [c6fc5cdbf0]. After generation the answer is
@@ -27,6 +31,7 @@ no way to know it.
 
     python rag.py "why did to_csv turn integers into floats"
     python rag.py "..." --retriever bm25 --k 5
+    python rag.py "..." --backend llamacpp     # llama-server must be running
     python rag.py "..." --backend claude
 """
 
@@ -34,8 +39,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import time
+import urllib.request
 from pathlib import Path
 
 from keyword_baseline import BM25
@@ -43,6 +50,7 @@ from keyword_baseline import BM25
 DATA_PATH = Path(__file__).parent / "data" / "commits.jsonl"
 DEFAULT_LOCAL_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
 DEFAULT_CLAUDE_MODEL = "claude-opus-5"
+DEFAULT_LLAMACPP_URL = os.environ.get("LLAMACPP_URL", "http://127.0.0.1:8080")
 BODY_CHARS = 1200  # per commit, keeps the prompt inside a small model's window
 ID_PATTERN = re.compile(r"\b[0-9a-f]{10}\b")
 
@@ -124,6 +132,46 @@ class LocalGenerator:
         return self.tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
 
+class LlamaCppGenerator:
+    """Talks to a llama.cpp server over its OpenAI-compatible chat endpoint.
+
+    Start the server separately, e.g.
+        llama-server -m qwen2.5-3b-instruct-q4_k_m.gguf --port 8080
+    The model name comes from the server so results are labelled with the
+    GGUF that was actually loaded, not with whatever the caller assumed.
+    """
+
+    def __init__(self, url: str = DEFAULT_LLAMACPP_URL, max_new_tokens: int = 200):
+        self.url = url.rstrip("/")
+        self.max_new_tokens = max_new_tokens
+        models = self._request("GET", "/v1/models")["data"]
+        model_path = models[0]["id"]  # a file path, or the --alias if one was given
+        name = Path(model_path).name
+        self.model_name = name[:-5] if name.endswith(".gguf") else name
+        self.name = f"llamacpp ({self.model_name})"
+
+    def _request(self, method: str, path: str, body: dict | None = None) -> dict:
+        data = json.dumps(body).encode() if body is not None else None
+        req = urllib.request.Request(
+            self.url + path, data=data, method=method,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=600) as resp:
+            return json.load(resp)
+
+    def generate(self, system: str, user: str) -> str:
+        out = self._request("POST", "/v1/chat/completions", {
+            "model": self.model_name,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "max_tokens": self.max_new_tokens,
+            "temperature": 0,  # greedy, same as the transformers backend
+        })
+        return out["choices"][0]["message"]["content"].strip()
+
+
 class ClaudeGenerator:
     def __init__(self, model_name: str = DEFAULT_CLAUDE_MODEL):
         import anthropic
@@ -148,6 +196,8 @@ def build_generator(backend: str, model_name: str | None):
         return ExtractiveGenerator()
     if backend == "claude":
         return ClaudeGenerator(model_name or DEFAULT_CLAUDE_MODEL)
+    if backend == "llamacpp":
+        return LlamaCppGenerator(model_name or DEFAULT_LLAMACPP_URL)
     return LocalGenerator(model_name or DEFAULT_LOCAL_MODEL)
 
 
@@ -181,8 +231,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("question")
     parser.add_argument("--retriever", choices=["bm25", "dense", "hybrid"], default="hybrid")
-    parser.add_argument("--backend", choices=["local", "claude", "extractive"], default="local")
-    parser.add_argument("--model", default=None)
+    parser.add_argument("--backend", choices=["local", "llamacpp", "claude", "extractive"], default="local")
+    parser.add_argument("--model", default=None, help="model name (local, claude) or server URL (llamacpp)")
     parser.add_argument("--k", type=int, default=5)
     args = parser.parse_args()
 

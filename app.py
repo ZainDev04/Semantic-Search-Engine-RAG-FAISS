@@ -20,7 +20,7 @@ import os
 import streamlit as st
 
 from keyword_baseline import BM25
-from rag import SYSTEM_PROMPT, answer, build_generator, load_records
+from rag import DEFAULT_LLAMACPP_URL, SYSTEM_PROMPT, answer, build_generator, load_records
 
 st.set_page_config(page_title="Commit search + RAG", page_icon="🔎", layout="wide")
 
@@ -87,17 +87,23 @@ with st.sidebar:
     generate = st.toggle("Answer the question", key="generate")
     backend = st.selectbox(
         "Backend",
-        ["extractive", "claude", "local"],
+        ["extractive", "llamacpp", "claude", "local"],
         format_func=lambda b: {
             "extractive": "extractive (top-1 commit, no model)",
+            "llamacpp": "llama.cpp server (Qwen2.5-3B Q4, needs llama-server running)",
             "claude": "claude-opus-5 (needs ANTHROPIC_API_KEY)",
             "local": "Qwen2.5-0.5B on CPU (~20 s)",
         }[b],
         disabled=not generate,
     )
-    model_override = st.text_input("Model override", "", disabled=not generate, placeholder="optional")
+    model_override = st.text_input(
+        "Model override", "", disabled=not generate,
+        placeholder="server URL for llamacpp, model name otherwise",
+    )
     if backend == "claude" and generate and not os.environ.get("ANTHROPIC_API_KEY"):
         st.warning("ANTHROPIC_API_KEY is not set; the claude backend will fail.")
+    if backend == "llamacpp" and generate:
+        st.caption(f"Talks to {model_override.strip() or DEFAULT_LLAMACPP_URL}.")
 
     with st.expander("System prompt"):
         st.code(SYSTEM_PROMPT, language=None)

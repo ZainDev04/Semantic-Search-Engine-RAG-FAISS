@@ -22,6 +22,7 @@ failure belongs to.
 
     python evaluate_rag.py                       # local model, all retrievers
     python evaluate_rag.py --retrievers bm25
+    python evaluate_rag.py --backend llamacpp    # llama-server must be running
     python evaluate_rag.py --backend claude      # needs ANTHROPIC_API_KEY
 """
 
@@ -63,7 +64,7 @@ def summarise(rows: list[dict]) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--retrievers", nargs="+", default=["bm25", "dense", "hybrid"])
-    parser.add_argument("--backend", choices=["local", "claude", "extractive"], default="local")
+    parser.add_argument("--backend", choices=["local", "llamacpp", "claude", "extractive"], default="local")
     parser.add_argument("--model", default=None)
     parser.add_argument("--k", type=int, default=5)
     args = parser.parse_args()

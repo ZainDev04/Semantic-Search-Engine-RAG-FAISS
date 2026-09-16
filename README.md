@@ -5,7 +5,7 @@ Search a git repository's commit messages by meaning instead of exact words, fee
 The corpus is 2,500 unique commit messages from [huggingface/datasets](https://github.com/huggingface/datasets). Two evaluations, with different conclusions:
 
 1. **Self-retrieval (2,500 docs, 200 queries):** a commit's title has to find its own body. Keyword search (BM25) wins. This task is extractive by construction, so that is expected once you look at the data.
-2. **Question answering (22 hand-written questions):** paraphrased questions a developer might actually ask. Dense retrieval finds the right commit at rank 1 more often than BM25 (20/22 vs 17/22). A 0.5B-parameter local model then answers from the retrieved commits, and its citation behaviour is measured against a no-model extractive baseline, which it does not beat.
+2. **Question answering (22 hand-written questions):** paraphrased questions a developer might actually ask. Dense retrieval finds the right commit at rank 1 more often than BM25 (20/22 vs 17/22). Two local models then answer from the retrieved commits, and their citation behaviour is measured against a no-model extractive baseline. The 0.5B model does not beat it. The 3B model cites the right commit in 82% of answers, but a by-hand read shows that 30% of its answers open with a sentence copied from the prompt's format example, which the citation checker cannot see.
 
 ## Demo
 
@@ -63,7 +63,7 @@ Cited: ['3eceb30868']
 retrieval 0.02s, generation 0.0s
 ```
 
-Swap `--backend extractive` for `--backend local` to have Qwen2.5-0.5B write the answer instead (about 20 s on CPU), or `--backend claude` with an API key.
+Swap `--backend extractive` for `--backend local` to have Qwen2.5-0.5B write the answer instead (about 20 s on CPU), `--backend llamacpp` for Qwen2.5-3B through a running llama.cpp server (about 45 s), or `--backend claude` with an API key.
 
 ## Part 1: retrieval
 
@@ -133,15 +133,16 @@ Every retriever gets the right commit into the context window every time, so ret
 
 ### Generation
 
-Three backends share the same prompt and the same citation checker:
+Four backends share the same prompt and the same citation checker:
 
 | backend | what it is |
 |---|---|
 | extractive | no model. Returns the top-1 commit's title and body with its id. The floor a generator has to beat. |
-| local | Qwen2.5-0.5B-Instruct via `transformers` on CPU. No key, no cost, runs on an 8 GB machine. Used for the committed numbers. |
+| local | Qwen2.5-0.5B-Instruct via `transformers` on CPU, float32. No key, no cost, runs on an 8 GB machine. |
+| llamacpp | any model served by [llama.cpp](https://github.com/ggml-org/llama.cpp)'s `llama-server`, over its OpenAI-compatible HTTP API. Used for Qwen2.5-3B-Instruct as a 4-bit GGUF (Q4_K_M, 2.1 GB), which is the only way a 3B model fits next to the retriever in 8 GB of RAM. |
 | claude | `claude-opus-5` through the Anthropic SDK. Wired up and documented; needs `ANTHROPIC_API_KEY`. Not used for committed numbers because they must be reproducible without a paid key. |
 
-Results with the local model (k = 5, greedy decoding, `results/rag_*.json`):
+Results with the two local models (k = 5, greedy decoding, `results/rag_*.json`):
 
 | generator | retriever | cites expected commit | cites anything | citation precision | wrongly abstains | s/answer |
 |---|---|---|---|---|---|---|
@@ -151,6 +152,9 @@ Results with the local model (k = 5, greedy decoding, `results/rag_*.json`):
 | Qwen2.5-0.5B | BM25 | 0.05 | 0.09 | 0.25 | 0.14 | 20.2 |
 | Qwen2.5-0.5B | dense | 0.14 | 0.14 | 0.83 | 0.14 | 17.9 |
 | Qwen2.5-0.5B | hybrid | 0.09 | 0.09 | 0.75 | 0.14 | 20.5 |
+| Qwen2.5-3B, Q4 | BM25 | 0.82 | 0.82 | 1.00 | 0.00 | 55.1 |
+| Qwen2.5-3B, Q4 | dense | 0.82 | 0.91 | 0.95 | 0.00 | 38.9 |
+| Qwen2.5-3B, Q4 | hybrid | 0.64 | 0.68 | 0.90 | 0.05 | 40.0 |
 
 "Citation precision" is the share of cited ids that were actually in the retrieved context; "wrongly abstains" is how often the model said the commits do not cover the question when the answering commit was in its context (it always was).
 
@@ -158,9 +162,13 @@ Results with the local model (k = 5, greedy decoding, `results/rag_*.json`):
 
 **The 0.5B model does not beat "print the top search result".** It cites the right commit in at most 14% of answers, abstains on 14% of questions it had the answer to, and in a few cases copies the illustrative id from the prompt's format example (the checker flags every one of those as fabricated, which is the point of having a checker). Reading the answers by hand: many are correct paraphrases of the right commit with the citation simply missing, but one (q05) inverted the two schema types it was describing, which is the kind of subtle error a citation would at least let a reader check.
 
-**This is a model-size result, not a pipeline result.** Retrieval delivered the right commit 100% of the time. The failure is in instruction following by a model small enough to run on a 2012 CPU with 8 GB of RAM. The code takes `--model` for a larger local model and `--backend claude` for the API; I have not run either, so the README makes no claim about them.
+**Six times the parameters fixes the citations.** Qwen2.5-3B cites the expected commit in 82% of answers with BM25 or dense retrieval, against 5% and 14% for the 0.5B model, and it wrongly abstains once in 66 answers instead of nine times. It still does not reach the extractive baseline's 91%, so on this metric alone "print the top result" is still the best generator, but the 3B answers are two-sentence explanations of the cause and the fix, which the baseline is not. Retrieval delivered the right commit 100% of the time for both models, so the whole difference between the rows is the generator.
 
-**Measuring the halves separately is what makes the table readable.** Had I reported only "answer quality", retrieval and generation failures would be indistinguishable. Splitting them shows the retriever is done and the generator is where the next hour of work should go.
+**The hybrid row is model noise, not retriever quality.** Hybrid retrieval put the expected commit at rank 1 for 19 of 22 questions, one fewer than dense, yet the 3B model cited it in 64% of answers versus 82%. Reading the answers: in 5 of the 8 hybrid misses the model wrote `[1]` or `[2]`, the position number from the context, instead of the commit id. The same happened 3 times with BM25 and twice with dense. The checker counts a position number as no citation, which is correct, but the cause is a formatting slip, not a retrieval failure. With 22 questions, a handful of slips is the whole gap.
+
+**The checker catches fabricated ids, not fabricated sentences.** Reading the 66 answers by hand, 20 of them (30%) open with the sentence "The loader dropped the encoding option because of a version check bug", followed by a real retrieved id. That sentence is the format example in the system prompt. The 0.5B model copied the example's made-up id, and the checker flagged every one; the 3B model copies the example's wording and attaches a real id to it, which the checker scores as a correct citation. The rest of those answers is usually right, so a reader who skips the first sentence gets a good explanation, but the metric cannot see the problem. All three fabricated ids the checker did flag were `c6fc5cdbf0`, the id used in the prompt's instruction line ("like [c6fc5cdbf0]"), which is also a real commit. Both are prompt defects: the example sentence and the example id should be nonsense that cannot be mistaken for content. I have not changed the prompt, because the 0.5B numbers were produced with it and a fair comparison needs the same prompt; fixing it and rerunning both models is the obvious next step.
+
+**Measuring the halves separately is what makes the table readable.** Had I reported only "answer quality", retrieval and generation failures would be indistinguishable. Splitting them shows the retriever is done and the generator, and now the prompt, is where the next hour of work should go.
 
 ## Data cleaning
 
@@ -189,18 +197,29 @@ python evaluate.py --skip-dense                                          # BM25 
 
 python rag.py "why did to_csv turn integer columns into floats"          # local model, hybrid retriever
 python rag.py "..." --retriever dense --backend extractive
+python rag.py "..." --backend llamacpp                                   # needs llama-server running, see below
 python rag.py "..." --backend claude                                     # needs ANTHROPIC_API_KEY, pip install anthropic
 
 python evaluate_rag.py --backend extractive                              # seconds
-python evaluate_rag.py                                                   # local model, ~30 min on CPU
+python evaluate_rag.py                                                   # Qwen2.5-0.5B, ~30 min on CPU
+python evaluate_rag.py --backend llamacpp                                # Qwen2.5-3B via llama-server, ~50 min on CPU
 ```
 
+The `llamacpp` backend talks to a [llama.cpp](https://github.com/ggml-org/llama.cpp) server on `http://127.0.0.1:8080` (override with `LLAMACPP_URL` or `--model <url>`). Download a prebuilt `llama-server` from the llama.cpp releases page and the GGUF from Hugging Face, then:
+
 ```
-python -m pytest                                                         # 40 tests, a few seconds, no model download
+hf download Qwen/Qwen2.5-3B-Instruct-GGUF qwen2.5-3b-instruct-q4_k_m.gguf
+llama-server -m <path to the .gguf> --alias Qwen2.5-3B-Instruct-Q4_K_M --port 8080 --ctx-size 4096 --threads 4 --parallel 1
+```
+
+The results file is named after the alias the server reports. The committed 3B numbers were produced with llama.cpp build b11003 on an Intel i7-3770 (4 cores, no AVX2), 8 GB of RAM, CPU only.
+
+```
+python -m pytest                                                         # 42 tests, a few seconds, no model download
 streamlit run app.py                                                     # browser demo
 ```
 
-The tests cover the BM25 scoring formula, reciprocal rank fusion, LSA, the data cleaning rules, the evaluation metrics, the citation checker, and the integrity of the committed dataset (size, uniqueness, cleaning, every question points at a real commit). They run without torch so they are fast enough to run on every change.
+The tests cover the BM25 scoring formula, reciprocal rank fusion, LSA, the data cleaning rules, the evaluation metrics, the citation checker, the llama.cpp client (against a fake server on localhost), and the integrity of the committed dataset (size, uniqueness, cleaning, every question points at a real commit). They run without torch so they are fast enough to run on every change.
 
 `data/commits.jsonl` is committed, so nothing needs to be cloned to run the above. To rebuild it from a fresh metadata-only clone of the source repo:
 
@@ -217,7 +236,7 @@ embedder.py          DenseIndex (sentence-transformers + FAISS) and LSAIndex (sc
 hybrid.py            reciprocal rank fusion of any two searchers
 search.py            command-line search
 evaluate.py          self-retrieval evaluation with overlap split; writes results/<model>.json
-rag.py               retrieve -> generate -> check citations; extractive / local / claude backends
+rag.py               retrieve -> generate -> check citations; extractive / local / llamacpp / claude backends
 evaluate_rag.py      runs the question set through every retriever; writes results/rag_<backend>.json
 app.py               Streamlit demo: retriever picker, ranked commits, answer with citation check
 tests/               pytest suite; runs without torch

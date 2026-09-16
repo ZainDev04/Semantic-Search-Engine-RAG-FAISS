@@ -82,3 +82,68 @@ def test_summarise_precision_is_none_when_nothing_cited():
     rows = [{"retrieval_hit": True, "cited_expected": False, "cited_ids": [],
              "unsupported_citations": [], "abstained": True, "generate_seconds": 0.0}]
     assert summarise(rows)["citation_precision"] is None
+
+
+@pytest.fixture
+def fake_llama_server():
+    """A stand-in for llama-server: answers /v1/models and /v1/chat/completions
+    and records the request bodies it receives."""
+    import json
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    received = []
+    model_id = {"value": "C:\models\qwen2.5-3b-instruct-q4_k_m.gguf"}
+
+    class Handler(BaseHTTPRequestHandler):
+        def _send(self, payload):
+            body = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            assert self.path == "/v1/models"
+            self._send({"data": [{"id": model_id["value"]}]})
+
+        def do_POST(self):
+            assert self.path == "/v1/chat/completions"
+            n = int(self.headers["Content-Length"])
+            received.append(json.loads(self.rfile.read(n)))
+            self._send({"choices": [{"message": {"content": "  answer [0000000001]\n"}}]})
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_port}", received, model_id
+    server.shutdown()
+
+
+def test_llamacpp_generator_names_itself_after_the_loaded_gguf(fake_llama_server):
+    from rag import LlamaCppGenerator
+
+    url, _, model_id = fake_llama_server
+    assert LlamaCppGenerator(url).name == "llamacpp (qwen2.5-3b-instruct-q4_k_m)"
+    # an --alias is returned as-is; dots inside it must survive
+    model_id["value"] = "Qwen2.5-3B-Instruct-Q4_K_M"
+    assert LlamaCppGenerator(url).name == "llamacpp (Qwen2.5-3B-Instruct-Q4_K_M)"
+
+
+def test_llamacpp_generator_sends_greedy_chat_request(fake_llama_server):
+    from rag import LlamaCppGenerator
+
+    url, received, _ = fake_llama_server
+    text = LlamaCppGenerator(url, max_new_tokens=50).generate("sys", "usr")
+    assert text == "answer [0000000001]"
+    (req,) = received
+    assert req["messages"] == [
+        {"role": "system", "content": "sys"},
+        {"role": "user", "content": "usr"},
+    ]
+    assert req["temperature"] == 0
+    assert req["max_tokens"] == 50
