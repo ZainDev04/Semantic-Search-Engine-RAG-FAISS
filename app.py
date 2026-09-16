@@ -7,9 +7,10 @@ Type a question, pick a retriever, and see the ranked commits. Optionally
 turn on generation to get an answer with citations and see the citation
 check run: every cited id is marked as retrieved (green) or fabricated (red).
 
-Retrievers and generators are built once per process and cached, so the
-first dense query pays for loading the model (about 20 s on CPU with the
-embedding cache warm) and later ones take milliseconds.
+Indexes and generators are built once per process and cached. The BM25 and
+dense indexes are cached separately and the hybrid retriever is assembled
+from them, so the embedding model loads once (about 20 s on CPU with the
+embedding cache warm) no matter how often you switch retrievers.
 """
 
 from __future__ import annotations
@@ -18,7 +19,8 @@ import os
 
 import streamlit as st
 
-from rag import SYSTEM_PROMPT, answer, build_generator, build_retriever, load_records
+from keyword_baseline import BM25
+from rag import SYSTEM_PROMPT, answer, build_generator, load_records
 
 st.set_page_config(page_title="Commit search + RAG", page_icon="🔎", layout="wide")
 
@@ -35,9 +37,28 @@ def records() -> list[dict]:
     return load_records()
 
 
-@st.cache_resource(show_spinner="Building retriever (first dense query loads the model)...")
+@st.cache_resource(show_spinner="Building BM25 index...")
+def bm25_index():
+    return BM25([r["text"] for r in records()])
+
+
+@st.cache_resource(show_spinner="Loading embedding model and building dense index (once per session)...")
+def dense_index():
+    from embedder import DenseIndex
+
+    return DenseIndex([r["text"] for r in records()])
+
+
+# The two indexes are cached separately so that switching between dense and
+# hybrid does not load the embedding model a second time. Fusing them is free.
 def retriever(method: str):
-    return build_retriever(method, records())
+    if method == "bm25":
+        return bm25_index()
+    if method == "dense":
+        return dense_index()
+    from hybrid import HybridSearch
+
+    return HybridSearch([bm25_index(), dense_index()])
 
 
 @st.cache_resource(show_spinner="Loading generator...")
